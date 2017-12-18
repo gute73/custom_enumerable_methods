@@ -48,6 +48,13 @@ module Enumerable
 		end
 		count
 	end
+
+	def my_map
+		return to_enum(:my_map) unless block_given?
+		new_array = []
+		self.my_each {|value| new_array << yield(value)}
+		new_array
+	end
 end
 
 puts "Testing #my_each:"
@@ -134,3 +141,15 @@ puts array.my_count(7)
 
 puts array.count {|value| value%3 == 0}
 puts array.my_count {|value| value%3 == 0}
+puts
+
+puts "Testing #my_map:"
+
+array = [3, 2, 6, 2, 19]
+
+puts array.map.inspect
+puts array.my_map.inspect
+
+puts array.map {|value| value**2}.inspect
+puts array.my_map {|value| value**2}.inspect
+puts
