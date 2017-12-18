@@ -21,6 +21,33 @@ module Enumerable
 		self.my_each { |value| selected_array << value if yield(value)}
 		selected_array
 	end
+
+	def my_all?
+		self.my_each {|value| return false if !yield(value)} 
+		true
+	end
+
+	def my_any?
+		self.my_each {|value| return true if yield(value)}
+		false
+	end
+
+	def my_none?
+		self.my_each {|value| return false if yield(value)}
+		true
+	end
+
+	def my_count(object_sought = "empty")
+		count = 0
+		if block_given?
+			self.my_each {|value| count += 1 if yield(value)}
+		elsif object_sought == "empty"
+			return self.length
+		else
+			self.my_each {|value| count += 1 if value == object_sought}
+		end
+		count
+	end
 end
 
 puts "Testing #my_each:"
@@ -55,3 +82,55 @@ puts array1.my_select {|value| value.is_a? String}.inspect
 puts array1.select.inspect
 puts array1.my_select.inspect
 puts
+
+puts "Testing #my_all?:"
+
+array1 = [3, "fish", "truth", :symbol]
+array2 = [3, 2, 5, 12, 19]
+
+puts array1.all? {|value| value.is_a? Integer}
+puts array1.my_all? {|value| value.is_a? Integer}
+
+puts array2.all? {|value| value.is_a? Integer}
+puts array2.my_all? {|value| value.is_a? Integer}
+puts
+
+puts "Testing #my_any?:"
+
+array1 = [3, "fish", "truth", :symbol]
+array2 = [3, 2, 5, 12, 19]
+
+puts array1.any? {|value| value.is_a? String}
+puts array1.my_any? {|value| value.is_a? String}
+
+puts array2.any? {|value| value.is_a? String}
+puts array2.my_any? {|value| value.is_a? String}
+puts
+
+puts "Testing #my_none?:"
+
+array1 = [3, "fish", "truth", :symbol]
+array2 = [3, 2, 5, 12, 19]
+
+puts array1.none? {|value| value.is_a? String}
+puts array1.my_none? {|value| value.is_a? String}
+
+puts array2.none? {|value| value.is_a? String}
+puts array2.my_none? {|value| value.is_a? String}
+puts
+
+puts "Testing #my_count:"
+
+array = [3, 2, 6, 2, 19]
+
+puts array.count
+puts array.my_count
+
+puts array.count(2)
+puts array.my_count(2)
+
+puts array.count(7)
+puts array.my_count(7)
+
+puts array.count {|value| value%3 == 0}
+puts array.my_count {|value| value%3 == 0}
