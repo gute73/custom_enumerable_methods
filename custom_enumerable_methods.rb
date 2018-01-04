@@ -1,16 +1,18 @@
 module Enumerable
 	def my_each
 		return to_enum(:my_each) unless block_given?
-		self.length.times do |num|
-			yield(self[num])
+		for value in self
+			yield(value)
 		end
 		self
 	end
 
 	def my_each_with_index
 		return to_enum(:my_each_with_index) unless block_given?
-		self.length.times do |num|
-			yield(self[num], num)
+		i = 0
+		for value in self
+			yield(value, i)
+			i += 1
 		end
 		self
 	end
@@ -18,7 +20,7 @@ module Enumerable
 	def my_select
 		return to_enum(:my_select) unless block_given?
 		selected_array = []
-		self.my_each { |value| selected_array << value if yield(value)}
+		self.my_each {|value| selected_array << value if yield(value)}
 		selected_array
 	end
 
@@ -49,13 +51,40 @@ module Enumerable
 		count
 	end
 
-	def my_map
-		return to_enum(:my_map) unless block_given?
+	def my_map(&procedure)
+		return to_enum(:my_map) unless (block_given? || procedure)
 		new_array = []
-		self.my_each {|value| new_array << yield(value)}
+		if procedure
+			self.my_each {|value| new_array << procedure.call(value)}
+		else
+			self.my_each {|value| new_array << yield(value)}
+		end
 		new_array
 	end
+
+	def my_inject(parameter = nil)
+		skip_first = true
+		if block_given?
+			if parameter
+				skip_first = false 
+				memo = parameter
+			else
+				memo = self.first
+			end
+			self.my_each {|value| skip_first ? skip_first = false : memo = yield(memo, value)}
+		else
+			operation = parameter
+			memo = self.first
+			self.my_each {|value| skip_first ? skip_first = false : memo = memo.public_send(operation, value)}
+		end
+		memo
+	end
 end
+
+def multiply_els(array)
+	array.inject(:*)
+end
+
 
 puts "Testing #my_each:"
 
@@ -66,7 +95,9 @@ puts array1.my_each {|x| puts "#{x} tacos"}.inspect
 
 puts array1.each.inspect
 puts array1.my_each.inspect
-puts
+
+puts (5..10).each {|x| puts "#{x} tacos"}
+puts (5..10).my_each {|x| puts "#{x} tacos"}
 
 puts "Testing #my_each_with_index:"
 
@@ -152,4 +183,31 @@ puts array.my_map.inspect
 
 puts array.map {|value| value**2}.inspect
 puts array.my_map {|value| value**2}.inspect
+
+square = Proc.new {|value| value**2}
+puts array.map(&square).inspect
+puts array.my_map(&square).inspect
 puts
+
+puts "Testing #my_inject:"
+
+puts (5..10).inject {|sum, n| sum + n}
+puts (5..10).my_inject {|sum, n| sum + n}
+
+puts (5..10).inject(1) {|product, n| product * n}
+puts (5..10).my_inject(1) {|product, n| product * n}
+
+longest = %w{cat sheep bear}.inject do |memo, word|
+	memo.length > word.length ? memo: word
+end
+puts longest
+longest = %w{cat sheep bear}.my_inject do |memo, word|
+	memo.length > word.length ? memo: word
+end
+puts longest
+
+puts (5..10).inject(:+)
+puts (5..10).my_inject(:+)
+puts
+
+puts multiply_els([2,4,5])
